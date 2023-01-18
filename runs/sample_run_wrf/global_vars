@@ -1,0 +1,43 @@
+#!/bin/bash
+#----------------------------------------------------------------------
+# Variables Globales:
+calwrf_inp_file=wrfout/wrfout_d01_test.nc
+calwrf_out_file=test.m3d
+
+#Preparacion de GEO.DAT
+read pmap rlat0 rlon0 xlat1 xlat2 xorigkm yorigkm dgridkm nx ny nz<<< $( grep "LCC" ${calwrf_out_file})
+read idate total_horas nx ny nz <<< $( awk '/LCC/{getline;getline;print;}' ${calwrf_out_file} )
+
+#projection ("UTM", "TTM", "LCC", "PS", "EM", "LAZA")
+if [ $pmap == "LCC" ] 
+then
+	read xie yie xee yee zie zee minlon maxlon minlat maxlat <<< $( awk '/LCC/{getline;getline;getline;print;}' ${calwrf_out_file} )
+	proj4="+proj=lcc +lat_0=${rlat0} +lon_0=${rlon0} +lat_1=${xlat1} +lat_2=${xlat2} +units=${xyunit,,}" # +datum=NWS-84" # +datum=WGS84"
+	echo $proj4
+else 
+	echo "Proyecciòn $pmap en archivo ${calwrf_out_file} no soportada."
+	echo "Terminando ejecución."
+	break;
+fi
+
+ibyr=${idate:0:4};ibmo=${idate:4:2};ibdy=${idate:6:2};ibhr=${idate:8:2}
+
+read xorigkm yorigkm tmp<<< $(gdaltransform -s_srs epsg:${epsg_latlon} -t_srs "${proj4}" <<<$(echo "$minlon $minlat"))
+
+#gdaltransform -t_srs epsg:${epsg_latlon} -s_srs "${proj4}" <<< $(cat bbbox.csv)
+#	gdaltransform -s_srs epsg:${epsg_latlon} -t_srs "${proj4}" <<<$(echo "$minlon $minlat")
+#	gdaltransform -s_srs epsg:${epsg_latlon} -t_srs "${proj4}" <<<$(echo "$maxlon $maxlat")
+#awk -F"," 'NR>1{print $1 $2}' QAMETG.bna | gdaltransform -t_srs epsg:${epsg_latlon} -s_srs "${proj4}"
+#cat QAMETG.bna
+#echo "$xorigkm - $( bc -l <<<"$xorigkm+$dgridkm*$nx" )"
+#echo "$yorigkm - $( bc -l <<<"$yorigkm+$dgridkm*$ny" )"
+
+#PROYECCION:
+
+#ARCHIVOS INTERMEDIOS:
+dem_file=${PROYECTO}.tif
+
+geo_out_file="geo.dat"
+sfc_out_file="surf.dat"
+ppt_out_file="precip.dat"
+up_out_file="up.dat"

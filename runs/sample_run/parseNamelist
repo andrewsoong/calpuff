@@ -1,0 +1,65 @@
+#!/bin/bash
+#----------------------------------------------------------------------
+# Variables Globales:
+#Estaciones/observaciones utilizadas
+read sfc_lat sfc_lon sfc_z sfc_id sfc_name <<<$(echo "-34.58 -57.54 23 875930 SADL")
+read up_lat up_lon up_z up_id up_name <<<$(echo "-34.49 -58.32 20 87576 SAEZ");
+
+read sfc_x sfc_y nose <<< $(echo $sfc_lon $sfc_lat | gdaltransform -t_srs epsg:$epsg_local -s_srs epsg:$epsg_latlon)
+read up_x up_y nose <<< $(echo $up_lon $up_lat | gdaltransform -t_srs epsg:$epsg_local -s_srs epsg:$epsg_latlon)
+
+nstats=1	#numero de estaciones usadas
+
+#GRILLA
+read xc yc ellipsoidh <<<$( gdaltransform -s_srs epsg:${epsg_latlon} -t_srs epsg:${epsg_local} <<< $( echo "${clon} ${clat}" ) )
+   #Grilla regular:
+   dx=50.0;    #Resolucion-X
+   dy=50.0;    #Resolución-Y
+   xini=$(bc<<<"$xc-3162") 
+   yini=$(bc<<<"$yc-3162")
+   xfin=$(bc<<<"$xc+3162")
+   yfin=$(bc<<<"$yc+3162")
+   nx=$(bc<<< "($xfin-$xini)/$dx")
+   ny=$(bc<<< "($yfin-$yini)/$dy")
+
+   xorigkm=$( bc -l <<<"$xini/1000")
+   yorigkm=$( bc -l <<<"$yini/1000")
+   dgridkm=$( bc -l <<<"$dx/1000")
+
+   #niveles verticales
+   #nz=11           # numero de niveles verticales
+   #zlevs="0, 20, 40, 80, 100, 150, 200, 300, 400, 800, 1400, 2000, 3000"
+
+#PROYECCION:
+   datum="WGS-84"
+   pmap='UTM'         #projection ("UTM", "TTM", "LCC", "PS", "EM", "LAZA")
+   xyunit="KM"
+
+   #Calculate utmzone and hemisphere
+   utmzn=$(bc <<< "(((${clon}+180)/6)%60)+ 1")
+   if (( $(bc <<<"$clat < 0") )); then utmhem="S";else utmhem="N"; fi
+
+#FECHAS:
+read ibyr ibmo ibdy ibhr ibmin ibsec <<< ${ini_date//[-:\/_ ]/ }
+read ieyr iemo iedy iehr iemin iesec <<< ${end_date//[-:\/_ ]/ }
+	by=${byr:2:4} #formato YY
+	ey=${eyr:2:4} #formato YY
+	#Paso ibdy/iedy a dias julianos
+	date_ini=`date -u -d"$ibyr-$ibmo-$ibdy ${ibhr} hours" +"%Y %m  %j  %H"`
+	date_fin=`date -u -d"$ieyr-$iemo-$iedy ${iehr} hours" +"%Y %m  %j  %H"`
+	ibjdy=$(date -d "${ini_date}" +%j)
+	iejdy=$(date -d "${end_date}" +%j)
+
+total_horas=$((($(date -d"$ieyr-$iemo-$iedy $iehr" +%s)-$(date -d"$ibyr-$ibmo-$ibdy $ibhr" +%s))/(60*60) ))
+
+   #Date en GMT:
+   read gmtbyr gmtbmo gmtbdy gmtbhr <<< $(date -u -d"${ini_date} +${tz}" '+%Y %m %d %H')
+   read gmteyr gmtemo gmtedy gmtehr <<< $(date -u -d"${end_date} +${tz}" '+%Y %m %d %H')
+
+#ARCHIVOS INTERMEDIOS:
+dem_file=${PROYECTO}.tif
+
+geo_out_file="geo.dat"
+sfc_out_file="surf.dat"
+ppt_out_file="precip.dat"
+up_out_file="up.dat"

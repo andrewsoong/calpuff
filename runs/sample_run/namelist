@@ -1,0 +1,78 @@
+#!/bin/bash
+export LC_NUMERIC="en_US.UTF-8"
+#==================================================================================================
+dir=/home/rama/github/gauss-ma/calpuff		#directorio base del repositorio
+#--------------------------------------------------------------------------------------------------
+#Corridas:
+PROYECTO=SAMPLE	  	#Nombre del proyecto:
+polluts=(CO)
+periods=(1) 
+#--------------------------------------------------------------------
+#FECHAS:
+ini_date="2019-01-05 05" #:00:00" #YYYY-MM-DD HH:MM:SS (%Y-%m-%d_%H:%M:%s)
+end_date="2019-01-06 16" #:00:00" #YYYY-MM-DD HH:MM:SS (%Y-%m-%d_%H:%M:%s)
+tz=3			 #time-zone
+time_offset=-3.0	 #time offset with respect the 00UTM
+#--------------------------------------------------------------------
+#DOMINIO/GRILLA
+#EPSG Codes:
+epsg_latlon=4326	#latlon wgs84
+epsg_local=32720	#WGS-84 UTM Southern Hemisphere (utmzone:21)
+
+#Central position of the grid:
+clon=-60.149633         #Punto central-LON
+clat=-33.368784         #Punto central-LAT
+utm=-20
+datum=WGS-84
+xyunit=KM
+#--------------------------------------------------------------------
+#METEOROLOGIA:
+id_up=87576		#wmo id of the station
+id_sfc=87576		#wmo id of the station
+##Site-specific:
+#os_vars="OSYR OSMO OSDY OSHR TSKC HT01"
+#os_format="(2X,4(I2,1X),F3.1,1X,F3.1)"
+#--------------------------------------------------------------------
+##SUPERFICIE (AERSURFACE)
+#sfc_sec=(21)			 
+#sfc_sec_start_angles=(0 360)   #desde el norte en sentido horario.
+#sfc_seasons=(1 2 3 4)
+## Site-specific (ONSITE)
+#sfc_sec2=(21)			 
+#sfc_sec_start_angles2=(0 360)  #desde el norte en sentido horario.
+#sfc_seasons2=(1 2 3 4)
+#--------------------------------------------------------------------
+#TERRENO (AERMAP)
+Zflag=1.5   			#altura de receptor (desde el nivel del suelo)
+#--------------------------------------------------------------------
+#EDIFICIOS (BPIP)
+altura_base=9.0			#altura absoluta (snm) de ref aprox (donde considera que se apoyan los edificios)
+#--------------------------------------------------------------------
+#EMISORES:
+#--------------------------------------------------------------------
+#INPUT FILES:
+inp_met_sfc=data/sfc/${id_sfc}*
+inp_met_up=data/up/raob_${id_up}*
+#inp_met_os=OS/g4*
+inp_dem=data/dem/sample_dem.tif
+inp_emis=data/emis/sample_emis.csv
+inp_buildings=data/buildings/sample_buildings.csv 
+#inp_lu=${dir}/data/LU/BA_lu_aermod.tif
+#inp_bg=BGLVLS/BGLVLS.INP
+#inp_rec=REC/REC.INP
+#--------------------------------------------------------------------
+#EXES:
+ read62_exe=${dir}/exe/READ62.EXE
+ calmet_exe=${dir}/exe/CALMETv5.8.5.EXE
+calpuff_exe=${dir}/exe/CALPUFFv5.8.5.EXE
+calpost_exe=${dir}/exe/CALPOSTv6.221.EXE 
+#--------------------------------------------------------------------
+##URBAN?
+#urban_bool=0	   	#1/0 (true/false)
+#urban_name="SanNicolás" #nombre de ciudad
+#urban_pop=33305		#habitantes
+#----------------------------------------------------------------------
+#Extra:
+#Niveles Verticales:
+zlevs=(0 20 40 80 100 150 200 300 400 800 1400 2000 3000)
+nz=$(( ${#zlevs[*]} - 1)) # numero de niveles verticales
